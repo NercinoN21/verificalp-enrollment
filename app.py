@@ -343,18 +343,18 @@ def main():
     if isinstance(end_date, datetime) and end_date.tzinfo is None:
         end_date = end_date.replace(tzinfo=timezone.utc)
 
-    if now < start_date:
+    if now < datetime.fromisoformat(start_date):
         display_status_page(
             title='Inscrições em Breve',
             message='O período de inscrições ainda não começou. As inscrições abrirão em {date}.',
-            date=start_date,
+            date=start_date if isinstance(start_date, datetime) else datetime.fromisoformat(start_date),
         )
 
-    if now > end_date:
+    if now > datetime.fromisoformat(end_date):
         display_status_page(
             title='Inscrições Encerradas',
             message='O período de inscrições foi finalizado em {date}.',
-            date=end_date,
+            date=end_date if isinstance(end_date, datetime) else datetime.fromisoformat(end_date),
         )
 
     initialize_session_state()
