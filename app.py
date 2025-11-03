@@ -1,5 +1,6 @@
 import time
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from io import BytesIO
 from unicodedata import normalize
 
@@ -14,6 +15,14 @@ from utils.enem import (extract_hash_from_pdf, fetch_enem_scores,
                         parse_relevant_scores)
 from utils.generate_pdf import generate_pdf
 from utils.style import load_css, load_image_as_base64
+
+
+try:
+    LOCAL_TZ = ZoneInfo("America/Recife")
+except Exception:
+    st.error("Erro ao carregar fuso horário 'America/Recife'.")
+    from datetime import timedelta
+    LOCAL_TZ = timezone(timedelta(hours=-3))
 
 
 def display_status_page(title: str, message: str, date: datetime):
@@ -344,17 +353,19 @@ def main():
         end_date = end_date.replace(tzinfo=timezone.utc)
 
     if now < datetime.fromisoformat(start_date):
+        start_date_local = datetime.fromisoformat(start_date).astimezone(LOCAL_TZ)
         display_status_page(
             title='Inscrições em Breve',
             message='O período de inscrições ainda não começou. As inscrições abrirão em {date}.',
-            date=start_date if isinstance(start_date, datetime) else datetime.fromisoformat(start_date),
+            date=start_date_local,
         )
 
     if now > datetime.fromisoformat(end_date):
+        end_date_local = datetime.fromisoformat(end_date).astimezone(LOCAL_TZ)
         display_status_page(
             title='Inscrições Encerradas',
             message='O período de inscrições foi finalizado em {date}.',
-            date=end_date if isinstance(end_date, datetime) else datetime.fromisoformat(end_date),
+            date=end_date_local,
         )
 
     initialize_session_state()
