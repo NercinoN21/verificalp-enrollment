@@ -1,10 +1,12 @@
-from datetime import datetime
+from datetime import datetime,timezone
+from zoneinfo import ZoneInfo
 from io import BytesIO
 
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
+import streamlit as st
 
 
 def generate_pdf(data: dict) -> BytesIO:
@@ -35,6 +37,23 @@ def generate_pdf(data: dict) -> BytesIO:
     c.line(inch, height - 2.2 * inch, width - inch, height - 2.2 * inch)
     y_position = height - 3 * inch
     line_height = 0.3 * inch
+
+    update_time_str = 'N/A'
+    try:
+        LOCAL_TZ = ZoneInfo("America/Recife")
+    except Exception:
+        from datetime import timedelta
+        LOCAL_TZ = timezone(timedelta(hours=-3))
+
+    update_time_iso = data.get('data_ultima_atualizacao')
+
+    if update_time_iso:
+        try:
+            parsed_time = datetime.fromisoformat(update_time_iso)
+            update_time_str = parsed_time.strftime('%d/%m/%Y às %H:%M:%S')
+        except ValueError:
+            update_time_str = 'N/A (data inválida)'
+
     info = [
         ('Nome Completo:', data.get('Nome', 'N/A')),
         ('Matrícula:', data.get('Matricula', 'N/A')),
@@ -56,7 +75,7 @@ def generate_pdf(data: dict) -> BytesIO:
             'Nota Predita:',
             str(data.get('notas_relevantes', {}).get('nota_predita', 'N/A')),
         ),
-        ('Última Atualização:', data.get('data_ultima_atualizacao', 'N/A')),
+        ('Última Atualização:', update_time_str),
         ('Token do ENEM:', data.get('token_enem', 'N/A')),
     ]
 
@@ -75,11 +94,17 @@ def generate_pdf(data: dict) -> BytesIO:
         c.setFont('Helvetica', 12)
         c.drawString(inch + 2 * inch, y_position, value)
         y_position -= line_height
+
     c.setFont('Helvetica-Oblique', 9)
     c.setFillColor(HexColor('#888888'))
-    update_time_str = datetime.fromisoformat(
-        data.get('data_ultima_atualizacao')
-    ).strftime('%d/%m/%Y às %H:%M:%S')
+
+    if update_time_str != 'N/A' and 'inválida' not in update_time_str:
+        c.drawCentredString(
+            width / 2,
+            1.2 * inch,
+            f'Última atualização realizada em: {update_time_str}',
+        )
+
     c.drawCentredString(
         width / 2,
         1.2 * inch,
