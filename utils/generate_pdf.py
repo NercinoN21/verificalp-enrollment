@@ -50,6 +50,7 @@ def generate_pdf(data: dict) -> BytesIO:
     if update_time_iso:
         try:
             parsed_time = datetime.fromisoformat(update_time_iso)
+            parsed_time = parsed_time.astimezone(LOCAL_TZ)
             update_time_str = parsed_time.strftime('%d/%m/%Y às %H:%M:%S')
         except ValueError:
             update_time_str = 'N/A (data inválida)'
